@@ -1,118 +1,68 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+//@ts-nocheck
 
 import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
-
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+// import Section, {styles} from './Section';
+import {Pressable, SafeAreaView, Text, View} from 'react-native';
+import {Reclaim} from '@reclaimprotocol/reactnative-sdk';
 
 function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  const reclaimClient = new Reclaim.ProofRequest(
+    '0x6247BC5F84086c67400F7Ee1AE5B9Aa0Ee346fA2',
+  ); // your app ID.
+  const APP_SECRET =
+    '0xa5b24281f5afd15f992efd7c8e545feded16537600a484e6df7ecbc8bf7b3dba'; // your app secret key.
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+  async function startVerificationFlow() {
+    console.log('startVerificationFlow');
+    const providerIds = [
+      '5e1302ca-a3dd-4ef8-bc25-24fcc97dc800', // Aadhaar Card Date of Birth
+      'f1ecc692-cf13-4f45-9b91-ea1459875f07', // Alaska Miles
+    ];
 
+    const appDeepLink = 'mychat://chat/';
+    reclaimClient.setAppCallbackUrl(appDeepLink);
+
+    await reclaimClient.addContext(
+      (address = 'users address'),
+      (message = 'add a message'),
+    );
+
+    await reclaimClient.buildProofRequest(providerIds[0]);
+
+    const signature = reclaimClient.setSignature(
+      await Reclaim.generateSignature(APP_SECRET),
+    );
+
+    console.log('signature', signature);
+
+    const {requestUrl, statusUrl} =
+      await reclaimClient.createVerificationRequest();
+
+    console.log('Request URL:', requestUrl);
+    console.log('Status URL:', statusUrl);
+
+    await reclaimClient.startSession({
+      onSuccessCallback: proof => {
+        console.log('Verification success', proof);
+        // Your business logic here
+      },
+      onFailureCallback: error => {
+        console.error('Verification failed', error);
+        // Your business logic here to handle the error
+      },
+    });
+  }
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
+    <SafeAreaView>
+      <SafeAreaView>
+        <View>
+          <Pressable onPress={startVerificationFlow}>
+            <Text>Start Verification Flow</Text>
+          </Pressable>
         </View>
-      </ScrollView>
+      </SafeAreaView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
 
 export default App;
