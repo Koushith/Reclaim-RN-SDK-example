@@ -1,39 +1,33 @@
-//@ts-nocheck
-
 import React from 'react';
 // import Section, {styles} from './Section';
 import {Pressable, SafeAreaView, Text, View} from 'react-native';
 import {Reclaim} from '@reclaimprotocol/reactnative-sdk';
 
 function App(): React.JSX.Element {
-  const reclaimClient = new Reclaim.ProofRequest(
-    '0x6247BC5F84086c67400F7Ee1AE5B9Aa0Ee346fA2',
-  ); // your app ID.
-  const APP_SECRET =
-    '0xa5b24281f5afd15f992efd7c8e545feded16537600a484e6df7ecbc8bf7b3dba'; // your app secret key.
+  const reclaimClient = new Reclaim.ProofRequest(''); // your app ID.
+  const APP_SECRET = ''; // your app secret key.
 
   async function startVerificationFlow() {
     console.log('startVerificationFlow');
     const providerIds = [
-      '5e1302ca-a3dd-4ef8-bc25-24fcc97dc800', // Aadhaar Card Date of Birth
-      'f1ecc692-cf13-4f45-9b91-ea1459875f07', // Alaska Miles
+      '5e1302ca-a3dd-4ef8-bc25-24fcc97dc800', // Aadhaar Card Date of Birth (auto seleted)
     ];
 
     const appDeepLink = 'mychat://chat/';
     reclaimClient.setAppCallbackUrl(appDeepLink);
 
-    await reclaimClient.addContext(
-      (address = 'users address'),
-      (message = 'add a message'),
-    );
+    reclaimClient.addContext('users address', 'add a message');
 
     await reclaimClient.buildProofRequest(providerIds[0]);
 
-    const signature = reclaimClient.setSignature(
-      await Reclaim.generateSignature(APP_SECRET),
+    reclaimClient.setSignature(
+      await reclaimClient.generateSignature(APP_SECRET as string),
     );
 
-    console.log('signature', signature);
+    console.log(
+      'signature',
+      await reclaimClient.generateSignature(APP_SECRET as string),
+    );
 
     const {requestUrl, statusUrl} =
       await reclaimClient.createVerificationRequest();
